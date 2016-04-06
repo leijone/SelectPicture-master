@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:cardview="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/framelayout"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:descendantFocusability="blocksDescendants">
+
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        cardview:cardCornerRadius="3dp"
+        cardview:cardElevation="5dp">
+
+        <com.zcy.imagelib.view.MyImageView
+            android:id="@+id/child_image"
+            android:layout_width="fill_parent"
+            android:layout_height="118dip"
+            android:scaleType="fitXY" />
+
+        <CheckBox
+            android:id="@+id/child_checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:button="@drawable/pictures_select_icon"
+            android:visibility="gone" />
+    </android.support.v7.widget.CardView>
+</FrameLayout>

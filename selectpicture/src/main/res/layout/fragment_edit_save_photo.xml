@@ -1,0 +1,59 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/darker_gray"
+    tools:context="com.desmond.squarecamera.EditSavePhotoFragment" >
+
+    <ImageView
+        android:id="@+id/photo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:scaleType="fitXY" />
+
+    <View
+        android:id="@+id/cover_top_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_alignTop="@id/photo"
+        android:background="@android:color/black" />
+
+    <View
+        android:id="@+id/cover_bottom_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_alignBottom="@id/photo"
+        android:background="@android:color/black" />
+
+    <RelativeLayout
+        android:id="@+id/topbanner"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="#ef111111" >
+
+        <TextView
+            android:id="@+id/tv_back"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_centerVertical="true"
+            android:drawableLeft="@drawable/yt_btn_back_normal"
+            android:gravity="center"
+            android:text="返回"
+            android:textColor="@android:color/white" />
+
+        <TextView
+            android:id="@+id/tv_complete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/bg_green"
+            android:padding="8dp"
+            android:text="确定"
+            android:textColor="@android:color/white" />
+    </RelativeLayout>
+
+</RelativeLayout>

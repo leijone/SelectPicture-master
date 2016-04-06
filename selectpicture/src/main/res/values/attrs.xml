@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="clipImageLayout">
+        <attr name="clipZoomImageView_background" format="reference"></attr>
+        <attr name="clipImageBorderView_horizontalPadding" format="dimension"></attr>
+        <attr name="horizontalPadding" format="dimension"></attr>
+    </declare-styleable>
+
+</resources>

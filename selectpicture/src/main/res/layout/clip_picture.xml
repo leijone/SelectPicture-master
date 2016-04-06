@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:zcy="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+    <uk.co.senab.photoview.PhotoView
+        android:id="@+id/src_pic"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+        <com.zcy.imagelib.crop.ClipBorderView
+            android:id="@+id/clipview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            zcy:horizontalPadding="10dp" />
+
+        <RelativeLayout
+            android:id="@+id/topbanner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="#ef000000" >
+
+            <TextView
+                android:id="@+id/tv_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="16dp"
+                android:padding="8dip"
+                android:text="返回"
+                android:textColor="@android:color/white" />
+
+            <TextView
+                android:id="@+id/tv_rotate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:padding="8dip"
+                android:text="旋转"
+                android:textColor="@android:color/white" />
+
+            <TextView
+                android:id="@+id/tv_complete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="16dp"
+                android:background="@drawable/bg_green"
+                android:padding="8dp"
+                android:text="使用"
+                android:textColor="@android:color/white" />
+        </RelativeLayout>
+
+</FrameLayout>

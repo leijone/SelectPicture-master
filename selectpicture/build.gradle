@@ -1,0 +1,167 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.dcendents.android-maven'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.3"
+
+    defaultConfig {
+        minSdkVersion 11
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+}
+
+ext {
+    bintrayRepo = 'maven'
+    bintrayName = 'selectpicture'
+
+    publishedGroupId = 'com.zcy.androidlibrary'
+    libraryName = 'pictureselectlibrary'
+    artifact = 'selectpicture'
+
+    libraryDescription = 'A library for Android to select local pictures'
+
+    siteUrl = 'https://github.com/zhuchunyao164488421/SelectPicture'
+    gitUrl = 'https://github.com/zhuchunyao164488421/SelectPicture.git'
+
+    libraryVersion = '1.0.0-beta'
+
+    developerId = 'zcy'
+    developerName = 'zhuchunyao'
+    developerEmail = 'zhuchunyao164488421@hotmail.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
+
+dependencies {
+    compile 'com.commit451:PhotoView:1.2.4'
+    compile 'com.github.bumptech.glide:glide:3.7.0'
+    compile 'com.nineoldandroids:library:2.4.0'
+    compile 'com.android.support:appcompat-v7:23.0.0'
+    compile 'com.android.support:support-v4:23.0.0'
+    compile 'com.android.support:cardview-v7:23.0.0'
+}
+
+version = libraryVersion
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+android.libraryVariants.all { variant ->
+    println variant.javaCompile.classpath.files
+    if (variant.name == 'release') {
+        task("generate${variant.name.capitalize()}Javadoc", type: Javadoc) {
+            // title = ''
+            // description = ''
+            source = variant.javaCompile.source
+            classpath = files(variant.javaCompile.classpath.files, project.android.getBootClasspath())
+            options {
+                encoding "utf-8"
+                links "http://docs.oracle.com/javase/7/docs/api/"
+                linksOffline "http://d.android.com/reference", "${android.sdkDirectory}/docs/reference"
+            }
+            exclude '**/BuildConfig.java'
+            exclude '**/R.java'
+        }
+        task("javadoc${variant.name.capitalize()}Jar", type: Jar, dependsOn: "generate${variant.name.capitalize()}Javadoc") {
+            classifier = 'javadoc'
+            from tasks.getByName("generate${variant.name.capitalize()}Javadoc").destinationDir
+        }
+        artifacts {
+            archives tasks.getByName("javadoc${variant.name.capitalize()}Jar")
+        }
+    }
+}
+
+// Bintray
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+
+    configurations = ['archives']
+    pkg {
+        repo = bintrayRepo
+        name = bintrayName
+        desc = libraryDescription
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = allLicenses
+        publish = true
+        publicDownloadNumbers = true
+        version {
+            desc = libraryDescription
+            gpg {
+                sign = true //Determines whether to GPG sign the files. The default is false
+                passphrase = properties.getProperty("bintray.gpg.password")
+                //Optional. The passphrase for GPG signing'
+            }
+        }
+    }
+}
+
+
+group = publishedGroupId                               // Maven Group ID for the artifact
+
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                groupId publishedGroupId
+                artifactId artifact
+
+                // Add your description here
+                name libraryName
+                description libraryDescription
+                url siteUrl
+
+                // Set your license
+                licenses {
+                    license {
+                        name licenseName
+                        url licenseUrl
+                    }
+                }
+                developers {
+                    developer {
+                        id developerId
+                        name developerName
+                        email developerEmail
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+
+                }
+            }
+        }
+    }
+}
