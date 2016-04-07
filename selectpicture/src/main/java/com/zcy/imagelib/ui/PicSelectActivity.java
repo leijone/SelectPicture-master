@@ -44,8 +44,13 @@ import com.zcy.imagelib.tools.Utils;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 
 public class PicSelectActivity extends Activity implements
@@ -69,7 +74,6 @@ public class PicSelectActivity extends Activity implements
     private String picture;
     private boolean flag = false;
     private AlbumAdapter albumAdapter;
-    private ExecutorService threadPool;
     private static final int 多选压缩图片 = 1111;
     private static final int 单选压缩图片 = 222;
 
@@ -80,11 +84,10 @@ public class PicSelectActivity extends Activity implements
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(getResources().getIdentifier("the_picture_selection",
                 "layout", getPackageName()));
-        threadPool = Executors.newFixedThreadPool(3);
         initView();
         setListeners();
         setAdapter();
-        showPic();
+        getAlbum();
         handleConfig();
     }
 
@@ -136,43 +139,57 @@ public class PicSelectActivity extends Activity implements
                         break;
                     case D:
                         DialogUtils.showLoadingDialog(PicSelectActivity.this, "处理图片中");
-                        threadPool.execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                ArrayList<String> images = new ArrayList<String>();
-                                for (ImageBean bean : selecteds) {
-                                    String sacePath = Utils.compressBitmapFromImageBean(bean);
-                                    if (null != sacePath) {
-                                        images.add(sacePath);
+                        Observable.just(selecteds.get(0))
+                                .map(new Func1<ImageBean, String>() {
+                                    @Override
+                                    public String call(ImageBean imageBean) {
+                                        String savePath = Utils.compressBitmapFromImageBean(imageBean);
+                                        if (null != savePath) {
+                                            return savePath;
+                                        } else {
+                                            return null;
+                                        }
                                     }
-                                }
-                                Message msg = handler.obtainMessage();
-                                msg.what = 单选压缩图片;
-                                msg.obj = images.get(0);
-                                msg.sendToTarget();
-                            }
-                        });
+                                })
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(new Action1<String>() {
+                                    @Override
+                                    public void call(String s) {
+                                        DialogUtils.dismissLoadingDialog();
+                                        Intent in = new Intent();
+                                        in.putExtra(PictureSelectedUtil.IMAGE, s);
+                                        setResult(RESULT_OK, in);
+                                        finish();
+                                    }
+                                });
                         break;
                     case E:
                         DialogUtils.showLoadingDialog(PicSelectActivity.this, "处理图片中");
-                        threadPool.execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                ArrayList<String> images = new ArrayList<String>();
-                                for (ImageBean bean : selecteds) {
-                                    String sacePath = Utils.compressBitmapFromImageBean(bean);
-                                    if (null != sacePath) {
-                                        images.add(sacePath);
+                        Observable.from(selecteds)
+                                .map(new Func1<ImageBean, ArrayList<String>>() {
+                                    @Override
+                                    public ArrayList<String> call(ImageBean imageBean) {
+                                        ArrayList<String> paths = new ArrayList<String>();
+                                        String savePath = Utils.compressBitmapFromImageBean(imageBean);
+                                        if (null != savePath) {
+                                            paths.add(savePath);
+                                        }
+                                        return paths;
                                     }
-                                }
-                                Message msg = handler.obtainMessage();
-                                msg.what = 多选压缩图片;
-                                msg.obj = images;
-                                msg.sendToTarget();
-                            }
-                        });
+                                })
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(new Action1<ArrayList<String>>() {
+                                    @Override
+                                    public void call(ArrayList<String> strings) {
+                                        DialogUtils.dismissLoadingDialog();
+                                        Intent intent = new Intent();
+                                        intent.putExtra(PictureSelectedUtil.IMAGES, strings);
+                                        setResult(RESULT_OK, intent);
+                                        finish();
+                                    }
+                                });
                         break;
                     case F:
                         intent.putExtra(PictureSelectedUtil.IMAGES, (Serializable) selecteds);
@@ -324,18 +341,16 @@ public class PicSelectActivity extends Activity implements
         flag = true;
         mImageBean.displayName = path.substring(path.lastIndexOf("/") + 1, path.length());
         picture = mImageBean.displayName;
-        new Thread() {
-            public void run() {
-                try {
-                    Thread.sleep(4000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                showPic();
-            }
-
-            ;
-        }.start();
+        Observable.just("")
+                .delaySubscription(4000, TimeUnit.MILLISECONDS)
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<String>() {
+                    @Override
+                    public void call(String s) {
+                        getAlbum();
+                    }
+                });
     }
 
 
@@ -381,18 +396,61 @@ public class PicSelectActivity extends Activity implements
         }
     };
 
-    private void showPic() {
-        threadPool.execute(new Runnable() {
+    private void getAlbum() {
+        Observable.just(PicSelectActivity.this)
+                .map(new Func1<PicSelectActivity, List<AlbumBean>>() {
+                    @Override
+                    public List<AlbumBean> call(PicSelectActivity picSelectActivity) {
+                        return AlbumHelper.newInstance()
+                                .getFolders(picSelectActivity);
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<List<AlbumBean>>() {
+                    @Override
+                    public void call(List<AlbumBean> albumBeans) {
+                        showPictures(albumBeans);
+                    }
+                });
+    }
 
-            @Override
-            public void run() {
-                Message msg = handler.obtainMessage();
-                msg.what = 浏览图片;
-                msg.obj = AlbumHelper.newInstance()
-                        .getFolders(PicSelectActivity.this);
-                msg.sendToTarget();
+    private void showPictures(List<AlbumBean> albumBeans) {
+        List<ImageBean> selectItem = getSelectedItem();
+        if (mAlbumBean != null) {
+            mAlbumBean.clear();
+        }
+        mAlbumBean = albumBeans;
+        if (mAlbumBean != null && mAlbumBean.size() != 0) {
+            mAlbumBeanData = mAlbumBean.get(0);
+            if (!flag) {
+                popWindow = showPopWindow();
+            } else {
+                DialogUtils.dismissLoadingDialog();
+                for (ImageBean bean : mAlbumBeanData.sets) {
+                    if (bean.displayName != null && bean.displayName.equals(picture)) {
+                        bean.isChecked = true;
+                        break;
+                    }
+                }
+                for (ImageBean bean1 : selectItem) {
+                    for (ImageBean bean2 : mAlbumBeanData.sets) {
+                        if ((bean1.path).equals(bean2.path)) {
+                            bean2.isChecked = true;
+                        }
+                    }
+                }
             }
-        });
+            adapter.taggle(mAlbumBeanData);
+            albumAdapter.setData(mAlbumBean, mAlbumBeanData);
+            flag = false;
+        } else {
+            ArrayList<ImageBean> sets = new ArrayList<ImageBean>();
+            sets.add(new ImageBean());
+            AlbumBean b = new AlbumBean("", 1, sets, "");
+            mAlbumBeanData = b;
+            adapter.taggle(b);
+        }
     }
 
     private Handler handler = new Handler(Looper.getMainLooper()) {
@@ -400,44 +458,7 @@ public class PicSelectActivity extends Activity implements
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
-                case 浏览图片:
-                    List<ImageBean> selectItem = getSelectedItem();
-                    if (mAlbumBean != null) {
-                        mAlbumBean.clear();
-                    }
-                    mAlbumBean = (List<AlbumBean>) msg.obj;
-                    if (mAlbumBean != null && mAlbumBean.size() != 0) {
-                        mAlbumBeanData = mAlbumBean.get(0);
-                        if (!flag) {
-                            adapter.taggle(mAlbumBeanData);
-                            popWindow = showPopWindow();
-                        } else {
-                            DialogUtils.dismissLoadingDialog();
-                            for (ImageBean bean : mAlbumBeanData.sets) {
-                                if (bean.displayName != null && bean.displayName.equals(picture)) {
-                                    bean.isChecked = true;
-                                    break;
-                                }
-                            }
-                            for (ImageBean bean1 : selectItem) {
-                                for (ImageBean bean2 : mAlbumBeanData.sets) {
-                                    if ((bean1.path).equals(bean2.path)) {
-                                        bean2.isChecked = true;
-                                    }
-                                }
-                            }
-                        }
-                        adapter.taggle(mAlbumBeanData);
-                        albumAdapter.setData(mAlbumBean, mAlbumBeanData);
-                        flag = false;
-                    } else {
-                        ArrayList<ImageBean> sets = new ArrayList<ImageBean>();
-                        sets.add(new ImageBean());
-                        AlbumBean b = new AlbumBean("", 1, sets, "");
-                        mAlbumBeanData = b;
-                        adapter.taggle(b);
-                    }
-                    break;
+
                 case 多选压缩图片:
                     DialogUtils.dismissLoadingDialog();
                     Intent intent = new Intent();
