@@ -67,7 +67,7 @@
           }
 ##6.如何使用：
 	dependencies {
-	compile 'com.zcy:selectpicture:1.0.0-beta'
+	compile 'com.zcy.androidlibrary:selectpicture:1.0.0-beta'
 	...
 	}
 ##特别感谢：
